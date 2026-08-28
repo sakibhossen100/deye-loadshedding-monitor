@@ -5,117 +5,111 @@ const app = express();
 
 const PORT = process.env.PORT || 8080;
 
-
-// Railway Variables
 const DEYE_APP_ID = process.env.DEYE_APP_ID;
 const DEYE_APP_SECRET = process.env.DEYE_APP_SECRET;
 const INVERTER_SN = process.env.INVERTER_SN;
 const DEYE_EMAIL = process.env.DEYE_EMAIL;
 
 
-// India Data Center
-const DEYE_API = "https://in1-developer.deyecloud.com";
+// Deye Developer API
+const DEYE_API = "https://developer.deyecloud.com";
 
 
-app.get("/", (req, res) => {
+app.get("/", (req,res)=>{
     res.send("Deye Load Shedding Monitor API Running");
 });
 
 
-app.get("/deye/status", async (req, res) => {
+app.get("/deye/status", async(req,res)=>{
 
-    try {
-
-
-        // Get Access Token
-        const tokenResponse = await axios.post(
-            `${DEYE_API}/v1.0/account/token`,
-            {
-                appId: DEYE_APP_ID,
-                appSecret: DEYE_APP_SECRET
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        );
+try {
 
 
-        const token =
-            tokenResponse.data?.data?.accessToken ||
-            tokenResponse.data?.accessToken;
+const tokenResponse = await axios.post(
+
+`${DEYE_API}/v1.0/account/token`,
+
+{
+appId: DEYE_APP_ID,
+appSecret: DEYE_APP_SECRET
+},
+
+{
+headers:{
+"Content-Type":"application/json"
+}
+}
+
+);
 
 
-        if (!token) {
-
-            return res.json({
-
-                error: "Token not received",
-
-                response: tokenResponse.data
-
-            });
-
-        }
+const token =
+tokenResponse.data?.data?.accessToken ||
+tokenResponse.data?.accessToken;
 
 
+if(!token){
 
-        // Get inverter latest data
+return res.json({
 
-        const inverterResponse = await axios.get(
+error:"Token not received",
 
-            `${DEYE_API}/v1.0/device/${INVERTER_SN}/latest`,
+response:tokenResponse.data
 
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
+});
 
-        );
+}
 
 
 
-        res.json({
+const inverter = await axios.get(
 
-            inverter: "Deye SUN-8K-SG05LP1-EU-SM2",
+`${DEYE_API}/v1.0/device/${INVERTER_SN}/latest`,
 
-            serial: INVERTER_SN,
+{
 
-            account: DEYE_EMAIL,
+headers:{
+Authorization:`Bearer ${token}`
+}
 
-            status: "Online",
+}
 
-            data: inverterResponse.data
-
-        });
-
-
-
-    } catch (error) {
+);
 
 
-        res.json({
+res.json({
 
-            error: "Deye API Error",
+inverter:"Deye SUN-8K-SG05LP1-EU-SM2",
 
-            message:
-            error.response?.data || error.message
+serial:INVERTER_SN,
 
-        });
+account:DEYE_EMAIL,
 
-
-    }
+data:inverter.data
 
 });
 
 
+}
 
-app.listen(PORT, () => {
+catch(error){
 
-    console.log(
-        `Server running on port ${PORT}`
-    );
+res.json({
+
+error:"Deye API Error",
+
+message:error.response?.data || error.message
+
+});
+
+}
+
+
+});
+
+
+app.listen(PORT,()=>{
+
+console.log("Server running on "+PORT);
 
 });
