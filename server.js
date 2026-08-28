@@ -1,3 +1,4 @@
+
 const express = require("express");
 const axios = require("axios");
 
@@ -5,41 +6,46 @@ const app = express();
 
 const PORT = process.env.PORT || 8080;
 
-app.get("/", (req,res)=>{
+// Deye Cloud Information
+const DEYE_EMAIL = "sakibhossen18@gmail.com";
+const INVERTER_SN = "2506305647";
+
+
+app.get("/", (req, res) => {
   res.send("Deye Load Shedding Monitor API Running");
 });
 
-app.get("/status", async (req,res)=>{
+
+app.get("/status", (req, res) => {
   res.json({
-    grid:"Normal",
-    message:"API is working"
+    grid: "Normal",
+    message: "API is working"
   });
 });
 
-app.get("/deye/status", async (req,res)=>{
+
+// Deye Status API
+app.get("/deye/status", async (req, res) => {
 
   try {
 
-    const response = await axios.post(
-      "https://api.deyecloud.com/api/v1/inverter/status",
-      {
-        sn: process.env.INVERTER_SN
-      },
-      {
-        headers:{
-          "Authorization": process.env.DEYE_APP_SECRET,
-          "App-Id": process.env.DEYE_APP_ID
-        }
-      }
-    );
-
-    res.json(response.data);
-
-  } catch(error){
+    // এখানে পরে Deye Cloud API connection বসবে
+    // এখন test response দিচ্ছে
 
     res.json({
-      error:true,
-      message:error.message
+      inverter: "Deye SUN-8K-SG05LP1-EU-SM2",
+      serial: INVERTER_SN,
+      account: DEYE_EMAIL,
+      status: "Online",
+      grid: "Normal",
+      battery: "Monitoring Active"
+    });
+
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: error.message
     });
 
   }
@@ -47,6 +53,6 @@ app.get("/deye/status", async (req,res)=>{
 });
 
 
-app.listen(PORT,()=>{
- console.log("Server running on "+PORT);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
