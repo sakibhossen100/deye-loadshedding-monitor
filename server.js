@@ -3,28 +3,36 @@ const axios = require("axios");
 
 const app = express();
 
+app.use(express.json());
+
 const PORT = process.env.PORT || 8080;
 
-// Deye Cloud Credentials
-const DEYE_EMAIL = process.env.DEYE_EMAIL || "sakibhossen18@gmail.com";
-const DEYE_PASSWORD = process.env.DEYE_PASSWORD || "";
-const INVERTER_SN = process.env.INVERTER_SN || "2506305647";
+const {
+  DEYE_APP_ID,
+  DEYE_APP_SECRET,
+  DEYE_EMAIL,
+  DEYE_PASSWORD,
+  INVERTER_SN
+} = process.env;
 
 
+// Home Test
 app.get("/", (req, res) => {
   res.send("Deye Load Shedding Monitor API Running");
 });
 
 
-// Login Test + Live Data
+// Deye Status API
 app.get("/deye/status", async (req, res) => {
 
   try {
 
-    // Deye Cloud API login
+    // Deye Cloud Login
     const login = await axios.post(
       "https://eu1-developer.deyecloud.com/v1.0/account/login",
       {
+        appId: DEYE_APP_ID,
+        appSecret: DEYE_APP_SECRET,
         email: DEYE_EMAIL,
         password: DEYE_PASSWORD
       }
@@ -38,8 +46,8 @@ app.get("/deye/status", async (req, res) => {
     const inverter = await axios.get(
       `https://eu1-developer.deyecloud.com/v1.0/device/${INVERTER_SN}/latest`,
       {
-        headers:{
-          Authorization:`Bearer ${token}`
+        headers: {
+          Authorization: `Bearer ${token}`
         }
       }
     );
@@ -48,15 +56,18 @@ app.get("/deye/status", async (req, res) => {
     res.json({
       inverter: "Deye SUN-8K-SG05LP1-EU-SM2",
       serial: INVERTER_SN,
+      account: DEYE_EMAIL,
+      status: "Online",
       data: inverter.data
     });
 
 
-  } catch(error){
+  } catch (error) {
 
     res.status(500).json({
-      error:"Deye Cloud connection failed",
-      message:error.response?.data || error.message
+      error: "Deye Cloud connection failed",
+      message: error.message,
+      details: error.response?.data || null
     });
 
   }
@@ -64,6 +75,6 @@ app.get("/deye/status", async (req, res) => {
 });
 
 
-app.listen(PORT,()=>{
- console.log(`Server running on ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
