@@ -6,16 +6,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 
-// Railway Environment Variables
+// Railway Variables
 const APP_ID = process.env.DEYE_APP_ID;
 const APP_SECRET = process.env.DEYE_APP_SECRET;
-const EMAIL = process.env.DEYE_EMAIL;
-const PASSWORD = process.env.DEYE_PASSWORD;
 const INVERTER_SN = process.env.INVERTER_SN;
 
 
-// Deye Cloud India Data Center
-const BASE_URL = "https://in1-developer.deyecloud.com";
+// Deye API
+const BASE_URL = "https://api.deyecloud.com";
 
 
 app.get("/", (req, res) => {
@@ -23,35 +21,41 @@ app.get("/", (req, res) => {
 });
 
 
+// Deye Status API
 app.get("/deye/status", async (req, res) => {
 
     try {
 
-        console.log("NEW DEYE SERVER LOADED");
+        console.log("Starting Deye Login...");
 
 
-        // Login
+        // Get Access Token
         const login = await axios.post(
             `${BASE_URL}/v1.0/account/login`,
             {
                 appId: APP_ID,
-                appSecret: APP_SECRET,
-                email: EMAIL,
-                password: PASSWORD
+                appSecret: APP_SECRET
             },
             {
-                headers: {
-                    "Content-Type": "application/json"
+                headers:{
+                    "Content-Type":"application/json"
                 }
             }
         );
 
 
-        if (!login.data.data || !login.data.data.accessToken) {
+        console.log("Login Response:", login.data);
+
+
+        if (
+            !login.data ||
+            !login.data.data ||
+            !login.data.data.accessToken
+        ){
 
             return res.json({
-                error: "Deye Login Failed",
-                response: login.data
+                error:"Login Failed",
+                response:login.data
             });
 
         }
@@ -60,13 +64,15 @@ app.get("/deye/status", async (req, res) => {
         const token = login.data.data.accessToken;
 
 
-        // Inverter Latest Data
+
+        // Get Inverter Data
+
         const inverter = await axios.get(
             `${BASE_URL}/v1.0/device/${INVERTER_SN}/latest`,
             {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
+                headers:{
+                    Authorization:`Bearer ${token}`,
+                    "Content-Type":"application/json"
                 }
             }
         );
@@ -75,35 +81,27 @@ app.get("/deye/status", async (req, res) => {
         res.json({
 
             inverter: INVERTER_SN,
-            account: EMAIL,
-            status: "Online",
+
+            status:"Online",
+
             data: inverter.data
 
         });
 
 
-    } catch (error) {
 
+    } catch(error){
 
         console.log(error.message);
 
 
         res.json({
 
-            error: "Deye API Error",
-            message: error.response
-                ? error.response.data
-                : error.message
+            error:"Deye API Error",
+
+            message:
+            error.response
+            ? error.response.data
+            : error.message
 
         });
-
-    }
-
-});
-
-
-app.listen(PORT, () => {
-
-    console.log(`Server running on port ${PORT}`);
-
-});
