@@ -5,37 +5,38 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
+
 // Railway Variables
-const APP_ID = process.env.DEYE_APP_ID;
-const APP_SECRET = process.env.DEYE_APP_SECRET;
-const EMAIL = process.env.DEYE_EMAIL;
-const PASSWORD = process.env.DEYE_PASSWORD;
+const DEYE_APP_ID = process.env.DEYE_APP_ID;
+const DEYE_APP_SECRET = process.env.DEYE_APP_SECRET;
+const DEYE_EMAIL = process.env.DEYE_EMAIL;
+const DEYE_PASSWORD = process.env.DEYE_PASSWORD;
 const INVERTER_SN = process.env.INVERTER_SN;
 
 
-// Deye API Base (India Data Center)
-const BASE_URL = "https://in1-developer.deyecloud.com";
+// India Data Center
+const DEYE_API = "https://in1-developer.deyecloud.com";
 
 
-// Home test
+// Test page
 app.get("/", (req, res) => {
     res.send("Deye Loadshedding Monitor Running");
 });
 
 
-// Deye Status
+// Status API
 app.get("/deye/status", async (req, res) => {
 
     try {
 
         // Login
-        const login = await axios.post(
-            `${BASE_URL}/v1.0/account/login`,
+        const loginResponse = await axios.post(
+            `${DEYE_API}/v1.0/account/login`,
             {
-                appId: APP_ID,
-                appSecret: APP_SECRET,
-                email: EMAIL,
-                password: PASSWORD
+                appId: DEYE_APP_ID,
+                appSecret: DEYE_APP_SECRET,
+                email: DEYE_EMAIL,
+                password: DEYE_PASSWORD
             },
             {
                 headers: {
@@ -45,26 +46,25 @@ app.get("/deye/status", async (req, res) => {
         );
 
 
-        if (!login.data || !login.data.data) {
+        if (!loginResponse.data.data) {
 
             return res.json({
                 error: "Login Failed",
-                response: login.data
+                response: loginResponse.data
             });
 
         }
 
 
-        const token = login.data.data.accessToken;
+        const token = loginResponse.data.data.accessToken;
 
 
-        // Get inverter latest data
-        const inverter = await axios.get(
-            `${BASE_URL}/v1.0/device/${INVERTER_SN}/latest`,
+        // Get inverter information
+        const inverterResponse = await axios.get(
+            `${DEYE_API}/v1.0/device/${INVERTER_SN}/latest`,
             {
                 headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
@@ -73,9 +73,9 @@ app.get("/deye/status", async (req, res) => {
         res.json({
 
             inverter: INVERTER_SN,
-            account: EMAIL,
+            account: DEYE_EMAIL,
             status: "Online",
-            data: inverter.data
+            data: inverterResponse.data
 
         });
 
@@ -93,7 +93,6 @@ app.get("/deye/status", async (req, res) => {
 
         });
 
-
     }
 
 });
@@ -102,6 +101,8 @@ app.get("/deye/status", async (req, res) => {
 
 app.listen(PORT, () => {
 
-    console.log(`Server running on port ${PORT}`);
+    console.log(
+        `Deye Monitor running on port ${PORT}`
+    );
 
 });
