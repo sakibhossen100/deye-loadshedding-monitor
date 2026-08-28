@@ -23,7 +23,7 @@ app.get("/deye/status", async (req, res) => {
 
     // Deye Cloud API login
     const login = await axios.post(
-      "https://api.deyecloud.com/v1.0/account/login",
+      "https://eu1-developer.deyecloud.com/v1.0/account/login",
       {
         email: DEYE_EMAIL,
         password: DEYE_PASSWORD
@@ -36,7 +36,7 @@ app.get("/deye/status", async (req, res) => {
 
     // Get inverter data
     const inverter = await axios.get(
-      `https://api.deyecloud.com/v1.0/device/${INVERTER_SN}/latest`,
+      `https://eu1-developer.deyecloud.com/v1.0/device/${INVERTER_SN}/latest`,
       {
         headers:{
           Authorization:`Bearer ${token}`
